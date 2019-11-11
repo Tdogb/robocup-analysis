@@ -1,6 +1,7 @@
 """Robocup robot modelling."""
 
 import numpy as np
+import matplotlib.pyplot as plt
 import motor
 import util
 
@@ -131,8 +132,37 @@ class Robot:
             coriolis * velocity_body
         return self.inverse_dynamics_body(velocity_body, acceleration_body)
 
+Vsys = np.matrix([[0.0],[0.0],[0.0]]) #x, y, theta
+currentTimestep = 0
+numTimesteps = 20
+dt = 0.01
+volts = 24
+# AMeasured = np.zeros((numTimesteps*3,1))
+B = np.zeros((numTimesteps,7))
+C = np.zeros((3,7))
+Vmeasured = np.zeros((numTimesteps*3, 1))
+
+
+
+def sysId(robot):
+    global Vsys
+    global currentTimestep
+    global volts
+    global dt
+    Asys = robot.forward_dynamics_body(Vsys, volts)
+    Vsys += Asys * dt
+    Voltages = np.matrix([[24,24,24,24]])
+    BRow = np.concatenate((Vsys.T, Voltages),axis=1)
+    B = np.stack((BRow, BRow, BRow))
+    BInv = np.linalg.pinv(B)
+    C = BInv * Asys
+    print(C)
+    currentTimestep += 1
+    plt.scatter(currentTimestep, C[2,0], c='b')
+    #plt.scatter(currentTimestep, Asys[2,0], c='r')
 
 def main():
+    global numTimesteps
     maxon_motor = motor.Motor(
         resistance=1.03,
         torque_constant=0.0335,
@@ -152,10 +182,13 @@ def main():
     voltage = np.asmatrix([24.0, 24, 24, 24]).T
     accel = np.asmatrix([1, 2, 3]).T
     pose = np.asmatrix([1, 2, 1]).T
-    print(
-        robot.forward_dynamics_world(
-            pose, velocity, robot.inverse_dynamics_world(
-                pose, velocity, accel)))
+    for i in range(0,numTimesteps):
+        sysId(robot)
+    plt.show()
+    # print(
+    #     robot.forward_dynamics_world(
+    #         pose, velocity, robot.inverse_dynamics_world(
+    #             pose, velocity, accel)))
     # print(
     #     robot.forward_dynamics_body(
     #         velocity, robot.inverse_dynamics_body(
