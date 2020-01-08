@@ -1,6 +1,7 @@
 """Robocup robot modelling."""
 
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 import motor
 import util
@@ -134,34 +135,86 @@ class Robot:
 
 Vsys = np.matrix([[0.0],[0.0],[0.0]]) #x, y, theta
 currentTimestep = 0
-numTimesteps = 20
+numTimesteps = 70
 dt = 0.01
-volts = 24
+# volts = 24
+
+# A = BC
+
 # AMeasured = np.zeros((numTimesteps*3,1))
-B = np.zeros((numTimesteps,7))
-C = np.zeros((3,7))
+Ax = np.zeros((numTimesteps,1))
+Ay = np.zeros((numTimesteps,1))
+At = np.zeros((numTimesteps,1))
+
+# Variables are Vx, Vy, Vz, U1, U2, U3, U4, Vx*Vtheta, Vy*Vtheta
+
+Bx = np.zeros((numTimesteps,10))
+By = np.zeros((numTimesteps,10))
+Bt = np.zeros((numTimesteps,10))
+
+Cx = np.zeros((10,1))
+Cy = np.zeros((10,1))
+Ct = np.zeros((10,1))
+
 Vmeasured = np.zeros((numTimesteps*3, 1))
 
-
-
-def sysId(robot):
+def sysId(robot, voltages):
     global Vsys
     global currentTimestep
-    global volts
     global dt
-    Asys = robot.forward_dynamics_body(Vsys, volts)
+    #print(voltages)
+    Asys = robot.forward_dynamics_body(Vsys, voltages.T)
+    Ax[currentTimestep,0] = Asys[0]
+    Ay[currentTimestep,0] = Asys[1]
+    At[currentTimestep,0] = Asys[2]
     Vsys += Asys * dt
-    Voltages = np.matrix([[24,24,24,24]])
-    BRow = np.concatenate((Vsys.T, Voltages),axis=1)
-    B = np.stack((BRow, BRow, BRow))
-    BInv = np.linalg.pinv(B)
-    C = BInv * Asys
-    print(C)
+    #Voltages = np.matrix([[24,24,24,24]])
+    
+    BRowTempLin = np.concatenate((Vsys.T, voltages),axis=1)
+    VsysT = Vsys.T
+    BRowTempSq = np.matrix([[VsysT[0,0]*VsysT[0,2],VsysT[0,1]*VsysT[0,2]]])
+    BRowTemp = np.concatenate((BRowTempLin, BRowTempSq), axis=1)
+    BRow = np.concatenate((BRowTemp, np.matrix([1])),axis=1)
+    Bx[currentTimestep,:] = BRow
+    By[currentTimestep,:] = BRow
+    Bt[currentTimestep,:] = BRow
+    # print(currentTimestep)
     currentTimestep += 1
-    plt.scatter(currentTimestep, C[2,0], c='b')
-    #plt.scatter(currentTimestep, Asys[2,0], c='r')
+
+def test_sysid(robot, vels, Cx, Cy, Ct):
+    volts = np.matrix([[-24,24,-24,24]])
+    # print(vels)
+    # print("  ")
+    # print(volts.T)
+    # print(vels.shape)
+    row = np.concatenate((vels.T, volts), axis=1)
+    secondArea = np.matrix([vels[0,0]*vels[2,0], vels[1,0]*vels[2,0], 1])
+    row2 = np.concatenate((row, secondArea), axis=1)
+    # print(row2)
+    # print(Cx)
+    print(row2*Cx)
+    actualParams = robot.forward_dynamics_body(vels, volts.T)
+    print(actualParams)
+    # print(Cx)
+
+    #CxInv = np.linalg.pinv(Cx)
+    # print(Cx)
+    # print("blank")
+    # print(2*accel[0] * -Cx.T)
+    # vels = np.matrix([[0],[0],[0]])
+    # actualParams = robot.inverse_dynamics_body(vels, accel)
+    # print(actualParams)
 
 def main():
+    global Ax
+    global Ay
+    global At
+    global Bx
+    global By
+    global Bt
+    global Cx
+    global Cy
+    global Ct
     global numTimesteps
     maxon_motor = motor.Motor(
         resistance=1.03,
@@ -179,32 +232,50 @@ def main():
         wheel_inertia=2.4e-5,
         wheel_angles=np.deg2rad([45, 135, -135, -45]))
     velocity = np.asmatrix([-1.0, -2, 3]).T
-    voltage = np.asmatrix([24.0, 24, 24, 24]).T
+    voltage = np.asmatrix([12, 24, 24, 24]).T
     accel = np.asmatrix([1, 2, 3]).T
     pose = np.asmatrix([1, 2, 1]).T
-    for i in range(0,numTimesteps):
-        sysId(robot)
-    plt.show()
-    # print(
-    #     robot.forward_dynamics_world(
-    #         pose, velocity, robot.inverse_dynamics_world(
-    #             pose, velocity, accel)))
-    # print(
-    #     robot.forward_dynamics_body(
-    #         velocity, robot.inverse_dynamics_body(
-    #             velocity, accel)))
-    # print(
-    #     robot.inverse_dynamics_world(
-    #         pose, velocity, robot.forward_dynamics_world(
-    #             pose, velocity, voltage)))
-    # print(robot.forward_dynamics_world(
-    #         np.asmatrix([0, 0, np.deg2rad(0)]).T,
-    #         np.asmatrix([0, 0, 1]).T,
-    #         np.asmatrix([5, 5, -5, -5]).T))
-    # for _ in range(0):
-    #     velocity += 0.01 * robot.forward_dynamics(velocity, voltage)
-    #     print(velocity.T)
-    #     print('-----')
+    vc = 0
+    ac = 0
+    maxVel = 10
+    maxVelMat = np.matrix([[maxVel],[0],[0]])
+    climbTimesteps = 30
+    cruiseTimesteps = 10
+    numTimesteps = climbTimesteps*2 + cruiseTimesteps
+    climbAccleration = maxVel/climbTimesteps
+
+    for i in np.arange(0,maxVel,maxVel/climbTimesteps):
+        a = np.matrix([[climbAccleration],[0],[0]])
+        v = np.matrix([[i],[i],[0]])
+        voltages = robot.inverse_dynamics_body(v,a).T
+        sysId(robot,voltages)
+    for _ in range(0, 10): #Timesteps to be in cruise for
+        zeroAccel = np.matrix([[0],[0],[0]])
+        voltages = robot.inverse_dynamics_body(maxVelMat,zeroAccel).T
+        sysId(robot, voltages)
+    for i in np.arange(maxVel,0,-maxVel/climbTimesteps):
+        a = np.matrix([[-climbAccleration],[0],[0]])
+        v = np.matrix([[i],[0],[i]])
+        voltages = robot.inverse_dynamics_body(v,a).T
+        sysId(robot,voltages)
+
+    # for t in range(0,100):
+        # a = np.matrix([math.])
+
+    BxInv = np.linalg.pinv(Bx)
+    ByInv = np.linalg.pinv(By)
+    BtInv = np.linalg.pinv(Bt)
+    # print(BxInv)
+    # print(Ax)
+    # print("done")
+    Cx = np.matmul(BxInv,Ax)
+    Cy = np.matmul(ByInv,Ay)
+    Ct = np.matmul(BtInv,At)
+    vels = np.matrix([[4],[0.5],[0]])
+    test_sysid(robot, vels, Cx, Cy, Ct)
+    # print(Ax)
+    # print(Bx)
+    # print(Cx)
 
 if __name__ == '__main__':
     main()
