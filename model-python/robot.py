@@ -145,16 +145,16 @@ vM0     vM1     vM2     vM3       lin vel x       lin vel y       ang vel  = acc
 b Matrix: Accelerations
 
 '''
-A = np.zeros((3, 27))
+A = np.zeros((3, 30))
 b = np.zeros((3, 1))
 def sysID(m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, accelX, accelY, accelTh):
     global A, b
     # print(A)
     # print("-------------------------------------------------")
     A_Block = np.matrix([
-        [m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY]
+        [m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 1]
     ])
     b_block = np.asmatrix([
         [accelX],
@@ -205,13 +205,14 @@ def main():
     varsLin = np.vstack((volts,vels))
     varsSq = np.asmatrix([
         [vels[0,0]*vels[2,0]],
-        [vels[1,0]*vels[2,0]]
+        [vels[1,0]*vels[2,0]],
+        [1]
     ])
     vars = np.vstack((varsLin, varsSq))
     estimatedAccels = np.array([
-        np.matmul(lstsq_solution[0][0:9,0].T,vars),
-        np.matmul(lstsq_solution[0][9:18,0].T,vars),
-        np.matmul(lstsq_solution[0][18:27,0].T,vars)
+        np.matmul(lstsq_solution[0][0:10,0].T,vars),
+        np.matmul(lstsq_solution[0][10:20,0].T,vars),
+        np.matmul(lstsq_solution[0][20:30,0].T,vars)
     ])
     print("--------")
     print(estimatedAccels)
