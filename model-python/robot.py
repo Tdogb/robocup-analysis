@@ -3,7 +3,8 @@
 import numpy as np
 import motor
 import util
-
+import random
+import math
 
 class Robot:
     """A robocup robot."""
@@ -131,8 +132,42 @@ class Robot:
             coriolis * velocity_body
         return self.inverse_dynamics_body(velocity_body, acceleration_body)
 
+'''
+Inputs: Voltage, linear velocity, angular velocity
+
+Ouputs: acceleration
+
+A Matrix: 
+vM0     vM1     vM2     vM3       lin vel x       lin vel y       ang vel       angvel*linvelx      angvel*linvely   0       0       0       0         0               0               0        = acceleration x
+0       0       0       0         0               0               0         vM0     vM1     vM2     vM3       lin vel x       lin vel y       ang vel  = acceleration y
+vM0     vM1     vM2     vM3       lin vel x       lin vel y       ang vel  = acceleration ang
+
+b Matrix: Accelerations
+
+'''
+A = np.zeros((3, 27))
+b = np.zeros((3, 1))
+def sysID(m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, accelX, accelY, accelTh):
+    global A, b
+    # print(A)
+    # print("-------------------------------------------------")
+    A_Block = np.matrix([
+        [m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY]
+    ])
+    b_block = np.asmatrix([
+        [accelX],
+        [accelY],
+        [accelTh]
+    ])
+    A = np.concatenate((A,A_Block))
+    b = np.concatenate((b,b_block))
+    # print(b)
+
 
 def main():
+    global A, b
     maxon_motor = motor.Motor(
         resistance=1.03,
         torque_constant=0.0335,
@@ -152,26 +187,44 @@ def main():
     voltage = np.asmatrix([24.0, 24, 24, 24]).T
     accel = np.asmatrix([1, 2, 3]).T
     pose = np.asmatrix([1, 2, 1]).T
-    print(
-        robot.forward_dynamics_world(
-            pose, velocity, robot.inverse_dynamics_world(
-                pose, velocity, accel)))
+
+    for _ in range(0, 100):
+        volts = np.asmatrix([[random.uniform(-24,24)],
+                             [random.uniform(-24,24)],
+                             [random.uniform(-24,24)],
+                             [random.uniform(-24,24)]])
+
+        vels = np.asmatrix([[random.uniform(-10, 10)],
+                            [random.uniform(-10, 10)],
+                            [random.uniform(-10, 10)]])
+        accels = robot.forward_dynamics_body(vels, volts)
+        # print(accels[0,0])
+        sysID(volts[0,0], volts[1,0], volts[2,0], volts[3,0], vels[0,0], vels[1,0], vels[2,0], accels[0,0], accels[1,0], accels[2,0])
+    lstsq_solution = np.linalg.lstsq(A,b)
+
+    varsLin = np.vstack((volts,vels))
+    varsSq = np.asmatrix([
+        [vels[0,0]*vels[2,0]],
+        [vels[1,0]*vels[2,0]]
+    ])
+    vars = np.vstack((varsLin, varsSq))
+    estimatedAccels = np.array([
+        np.matmul(lstsq_solution[0][0:9,0].T,vars),
+        np.matmul(lstsq_solution[0][9:18,0].T,vars),
+        np.matmul(lstsq_solution[0][18:27,0].T,vars)
+    ])
+    print("--------")
+    print(estimatedAccels)
+    print(accels)
+
     # print(
-    #     robot.forward_dynamics_body(
-    #         velocity, robot.inverse_dynamics_body(
-    #             velocity, accel)))
-    # print(
-    #     robot.inverse_dynamics_world(
-    #         pose, velocity, robot.forward_dynamics_world(
-    #             pose, velocity, voltage)))
-    # print(robot.forward_dynamics_world(
-    #         np.asmatrix([0, 0, np.deg2rad(0)]).T,
-    #         np.asmatrix([0, 0, 1]).T,
-    #         np.asmatrix([5, 5, -5, -5]).T))
-    # for _ in range(0):
-    #     velocity += 0.01 * robot.forward_dynamics(velocity, voltage)
-    #     print(velocity.T)
-    #     print('-----')
+    #     robot.forward_dynamics_world(
+    #         pose, velocity, robot.inverse_dynamics_world(
+    #             pose, velocity, accel)))
+
+
+    
 
 if __name__ == '__main__':
     main()
+
