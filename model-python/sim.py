@@ -7,7 +7,6 @@ import motor
 import robot
 from util import rotation_matrix
 
-
 def main():
     clock = pygame.time.Clock()
 
@@ -45,12 +44,14 @@ def main():
         # rx = np.asmatrix([np.sin(v * t), np.cos(v * t), v * t]).T
         # rv = v * np.asmatrix([np.cos(v * t), -np.sin(v * t), 1]).T
         # ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t), 0]).T
+
         rx = np.asmatrix([np.sin(v * t), np.cos(v * t / 3), v * np.sin(t)]).T
         rv = v * np.asmatrix([np.cos(v * t), -np.sin(v * t / 3) / 3, np.cos(t)]).T
         ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t / 3) / 9, -np.sin(t) / v]).T
 
-        u = 0.8 * controller.control(pos, vel, rx, rv, ra)
+        # rx = np.asmatrix([np.sin(t), np.cos(t), t]).T
 
+        u = 0.8 * controller.feedforward_control(pos, vel, rx, rv, ra)
         vdot = our_robot.forward_dynamics_world(pos, vel, u)
         visualizer.draw(pos, rx)
 
