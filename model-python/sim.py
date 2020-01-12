@@ -10,8 +10,12 @@ from util import rotation_matrix
 def main():
     clock = pygame.time.Clock()
 
-    pos = np.asmatrix([0.2, 1.3, -0.1]).T
-    vel = np.asmatrix([3, 0, 3.]).T
+    # pos = np.asmatrix([0.2, 1.3, -0.1]).T
+    # vel = np.asmatrix([3, 0, 3.]).T
+    # pos = np.asmatrix([0., 1., 0.]).T
+    # vel = np.asmatrix([3., 0., 3.]).T
+    pos = np.asmatrix([0., 1., 0.]).T
+    vel = np.asmatrix([0., 0., 0.]).T
     visualizer = vis.Visualizer()
 
     fps = 60
@@ -40,7 +44,7 @@ def main():
     while not visualizer.close:
         visualizer.update_events()
 
-        v = 3
+        v = 1
         # rx = np.asmatrix([np.sin(v * t), np.cos(v * t), v * t]).T
         # rv = v * np.asmatrix([np.cos(v * t), -np.sin(v * t), 1]).T
         # ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t), 0]).T
@@ -49,9 +53,14 @@ def main():
         rv = v * np.asmatrix([np.cos(v * t), -np.sin(v * t / 3) / 3, np.cos(t)]).T
         ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t / 3) / 9, -np.sin(t) / v]).T
 
-        # rx = np.asmatrix([np.sin(t), np.cos(t), t]).T
+        # rx = np.asmatrix([t, t, 0]).T
+        # rv = v * np.asmatrix([t, t, 0]).T
+        # ra = v ** 2 * np.asmatrix([t, t, 0]).T
+        rx = np.asmatrix([np.sin(v * t), np.cos(v * t), v * t]).T
+        rv = v * np.asmatrix([np.cos(v * t), -np.sin(v * t), v]).T
+        ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t), 1]).T
 
-        u = 0.8 * controller.feedforward_control(pos, vel, rx, rv, ra)
+        u = controller.feedforward_control(pos, vel, rx, rv, ra)
         vdot = our_robot.forward_dynamics_world(pos, vel, u)
         visualizer.draw(pos, rx)
 

@@ -1,5 +1,6 @@
 import numpy as np
 import util
+import math
 
 class Controller:
     def __init__(self, dt, model):
@@ -71,29 +72,51 @@ class Controller:
     #Don't need x for pure ff
 
     def feedforward_control(self, x, vel, rx, rv, ra):
-        vels = np.matrix([vel[0,0],
-                          vel[1,0],
-                          vel[2,0],
-                          vel[0,0]*vel[2,0],
-                          vel[1,0]*vel[2,0]]).T
-        print("-------------")
+        # if x[2,0] > math.pi:
+        #     return np.matrix([0,0,0,0]).T
+        # print(np.linalg.inv(util.rotation_matrix(math.pi/4))*np.matrix([[1],[1],[0]]))
+        x_body = np.linalg.inv(util.rotation_matrix(x[2,0])) * x
+        vel_body = np.linalg.inv(util.rotation_matrix(x[2,0])) * vel
+        rv_body = np.linalg.inv(util.rotation_matrix(x[2,0])) * rv
+        ra_body = np.linalg.inv(util.rotation_matrix(x[2,0])) * ra
+
+        vels_world = np.matrix([rv[0,0],
+                                rv[1,0],
+                                rv[2,0],
+                                rv[0,0]*rv[2,0],
+                                rv[1,0]*rv[2,0]]).T
+
+        vels = np.matrix([rv_body[0,0],
+                          rv_body[1,0],
+                          rv_body[2,0],
+                          rv_body[0,0]*rv_body[2,0],
+                          rv_body[1,0]*rv_body[2,0]]).T
+
         # print(np.vstack((np.vstack((self.ff_coefs.T[:,4:9],self.ff_coefs.T[:,14:19])),self.ff_coefs.T[:,24:29])))
         # print(vels)
         VCMat = np.vstack((np.vstack((self.ff_coefs.T[:,4:9], self.ff_coefs.T[:,14:19])), self.ff_coefs.T[:,24:29]))
         constantTermMatrix = np.matrix([[self.ff_coefs.T[0,9]], [self.ff_coefs.T[0,19]], [self.ff_coefs.T[0,29]]])
         MCMat = np.vstack((np.vstack((self.ff_coefs.T[:,0:4], self.ff_coefs.T[:,10:14])), self.ff_coefs.T[:,20:24]))
-        # print(VCMat)
-        # print(constantTermMatrix)
-        # print(MCMat)
-        # print(np.linalg.pinv(MCMat))
-        solvedParamX = np.matmul(np.linalg.pinv(MCMat), (ra - np.matmul(VCMat, vels) - constantTermMatrix))
-        print("-------------")
-        print(solvedParamX)
-        print(self.model.inverse_dynamics_body(vel, ra))
-        print("-------------")
+        print("-----------")
+        print(VCMat)
+        print(constantTermMatrix)
+        print(MCMat)
+        print(np.linalg.pinv(MCMat))
+        print(x[2,0])
+        solvedParamX = np.matmul(np.linalg.pinv(MCMat), (ra_body - np.matmul(VCMat, vels) - constantTermMatrix))
+        
+        a = np.matmul(np.linalg.pinv(MCMat), (ra - np.matmul(VCMat, vels_world) - constantTermMatrix))
+        b = self.model.inverse_dynamics_body(rv, ra)
+        # print(ra)
+        # print(a)
+        # print(b)
+        # print("-------------")
+        # print(solvedParamX)
+        # print(self.model.inverse_dynamics_world(x, vel, ra))
+        # print(solvedParamX/self.model.inverse_dynamics_world(x, vel, ra))
+        # print("-------------")
+
         # print("-------")
         # np.vstack(self.ff_coefs.T[:,0:5],self.ff_coefs.T[:,0:5])
         # print(np.matmul(solvedParamX,np.linalg.pinv(self.ff_coefs[0:4,:])))
         return solvedParamX#np.matmul(solvedParamX,np.linalg.pinv(self.ff_coefs[0:4,:])).T
-        # solvedParamY
-        # solvedParamW
