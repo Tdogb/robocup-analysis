@@ -71,7 +71,33 @@ class Controller:
 
     #Don't need x for pure ff
 
-    def feedforward_control(self, x, vel, rx, rv, ra):
+    # ss_A = np.matrix([[-3.40636316, 0, 0],
+    #                   [0, -3.40636316, 0],
+    #                   [0, 0, -11.8314673]])
+
+    # ss_B = np.matrix([[-0.34751847, -0.34751847, 0.34751847, 0.34751847],
+    #                   [0.34751847, -0.34751847, -0.34751847, 0.34751847],
+    #                   [10.0413389,  10.0413389,  10.0413389, 10.0413389]])
+
+    def feedforward_control(self, current_x, vel, rx, rv, ra):
+        A = np.matrix([[-3.40636316, 0, 0, 0, 0.949457230],
+                       [0, -3.40636316, 0, -0.949457230, 0],
+                       [0, 0, -11.8314673, 0, 0]])
+
+        B = np.matrix([[-0.34751847, -0.34751847, 0.34751847, 0.34751847],
+                       [0.34751847, -0.34751847, -0.34751847, 0.34751847],
+                       [10.0413389,  10.0413389,  10.0413389, 10.0413389]])
+                       
+        rv_body = np.linalg.inv(util.rotation_matrix(current_x[2,0])) * rv
+        xDot = np.linalg.inv(util.rotation_matrix(current_x[2,0])) * ra
+
+        x = np.matrix([[rv_body[0,0]],
+                       [rv_body[1,0]],
+                       [rv_body[2,0]],
+                       [rv_body[0,0]*rv_body[2,0]],
+                       [rv_body[1,0]*rv_body[2,0]]])
+        return np.linalg.pinv(B)*(xDot - A*x)
+        '''
         # if x[2,0] > math.pi:
         #     return np.matrix([0,0,0,0]).T
         # print(np.linalg.inv(util.rotation_matrix(math.pi/4))*np.matrix([[1],[1],[0]]))
@@ -120,3 +146,4 @@ class Controller:
         # np.vstack(self.ff_coefs.T[:,0:5],self.ff_coefs.T[:,0:5])
         # print(np.matmul(solvedParamX,np.linalg.pinv(self.ff_coefs[0:4,:])))
         return solvedParamX#np.matmul(solvedParamX,np.linalg.pinv(self.ff_coefs[0:4,:])).T
+        '''
