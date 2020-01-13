@@ -214,11 +214,11 @@ def main():
         np.matmul(lstsq_solution[0][10:20,0].T,vars),
         np.matmul(lstsq_solution[0][20:30,0].T,vars)
     ])
-    print(lstsq_solution[0])
+    # print(lstsq_solution[0])
     
-    # print("--------")
-    # print(estimatedAccels)
-    # print(accels)
+    print("--------")
+    print(estimatedAccels)
+    print(accels)
     
 
 if __name__ == '__main__':

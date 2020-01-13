@@ -87,7 +87,9 @@ class Controller:
         B = np.matrix([[-0.34751847, -0.34751847, 0.34751847, 0.34751847],
                        [0.34751847, -0.34751847, -0.34751847, 0.34751847],
                        [10.0413389,  10.0413389,  10.0413389, 10.0413389]])
-                       
+        constantMatrix = np.matrix([[-3.32719963e-15],
+                                    [-1.16616943e-14],
+                                    [ 1.88173939e-14]])
         rv_body = np.linalg.inv(util.rotation_matrix(current_x[2,0])) * rv
         xDot = np.linalg.inv(util.rotation_matrix(current_x[2,0])) * ra
 
@@ -96,7 +98,7 @@ class Controller:
                        [rv_body[2,0]],
                        [rv_body[0,0]*rv_body[2,0]],
                        [rv_body[1,0]*rv_body[2,0]]])
-        return np.linalg.pinv(B)*(xDot - A*x)
+        return np.linalg.pinv(B)*(xDot - A*x - constantMatrix)
         '''
         # if x[2,0] > math.pi:
         #     return np.matrix([0,0,0,0]).T
