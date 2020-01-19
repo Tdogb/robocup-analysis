@@ -71,17 +71,15 @@ class Controller:
 
     #Don't need x for pure ff
 
-    # ss_A = np.matrix([[-3.40636316, 0, 0],
-    #                   [0, -3.40636316, 0],
-    #                   [0, 0, -11.8314673]])
 
-    # ss_B = np.matrix([[-0.34751847, -0.34751847, 0.34751847, 0.34751847],
-    #                   [0.34751847, -0.34751847, -0.34751847, 0.34751847],
-    #                   [10.0413389,  10.0413389,  10.0413389, 10.0413389]])
 
     def feedforward_control(self, current_x, vel, rx, rv, ra):
-        A = np.matrix([[-3.40636316, 0, 0, 0, 0.949457230],
-                       [0, -3.40636316, 0, -0.949457230, 0],
+        # A = np.matrix([[-3.40636316, 0, 0, 0, 0.949457230],
+        #                [0, -3.40636316, 0, -0.949457230, 0],
+        #                [0, 0, -11.8314673, 0, 0]])
+
+        A = np.matrix([[-3.40636316, 0, 0, 0, 0],
+                       [0, -3.40636316, 0, 0, 0],
                        [0, 0, -11.8314673, 0, 0]])
 
         B = np.matrix([[-0.34751847, -0.34751847, 0.34751847, 0.34751847],
@@ -98,7 +96,9 @@ class Controller:
                        [rv_body[2,0]],
                        [rv_body[0,0]*rv_body[2,0]],
                        [rv_body[1,0]*rv_body[2,0]]])
-        return np.linalg.pinv(B)*(xDot - A*x - constantMatrix)
+        feedforward = np.linalg.pinv(B)*(xDot - A*x - constantMatrix)
+        return feedforward
+
         '''
         # if x[2,0] > math.pi:
         #     return np.matrix([0,0,0,0]).T

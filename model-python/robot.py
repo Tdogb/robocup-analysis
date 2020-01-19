@@ -163,6 +163,9 @@ def sysID(m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, accelX, accelY,
     ])
     A = np.concatenate((A,A_Block))
     b = np.concatenate((b,b_block))
+
+    # print(A)
+    # print(b)
     # print(b)
 
 
@@ -183,10 +186,10 @@ def main():
         wheel_radius=0.029,
         wheel_inertia=2.4e-5,
         wheel_angles=np.deg2rad([45, 135, -135, -45]))
-    velocity = np.asmatrix([-1.0, -2, 3]).T
-    voltage = np.asmatrix([24.0, 24, 24, 24]).T
-    accel = np.asmatrix([1, 2, 3]).T
-    pose = np.asmatrix([1, 2, 1]).T
+    # velocity = np.asmatrix([-1.0, -2, 3]).T
+    # voltage = np.asmatrix([24.0, 24, 24, 24]).T
+    # accel = np.asmatrix([1, 2, 3]).T
+    # pose = np.asmatrix([1, 2, 1]).T
 
     for _ in range(0, 100):
         volts = np.asmatrix([[random.uniform(-24,24)],
@@ -201,24 +204,36 @@ def main():
         # print(accels[0,0])
         sysID(volts[0,0], volts[1,0], volts[2,0], volts[3,0], vels[0,0], vels[1,0], vels[2,0], accels[0,0], accels[1,0], accels[2,0])
     lstsq_solution = np.linalg.lstsq(A,b)
+    maxVolts = 10
+    volts2 = np.asmatrix([[random.uniform(-maxVolts,maxVolts)],
+                            [random.uniform(-maxVolts,maxVolts)],
+                            [random.uniform(-maxVolts,maxVolts)],
+                            [random.uniform(-maxVolts,maxVolts)]])
 
-    varsLin = np.vstack((volts,vels))
+    vels2 = np.asmatrix([[random.uniform(-10, 10)],
+                        [random.uniform(-10, 10)],
+                        [random.uniform(-10, 10)]])
+    accels2 = robot.forward_dynamics_body(vels2, volts2)
+
+    varsLin = np.vstack((volts2,vels2))
     varsSq = np.asmatrix([
-        [vels[0,0]*vels[2,0]],
-        [vels[1,0]*vels[2,0]],
+        [vels2[0,0]*vels2[2,0]],
+        [vels2[1,0]*vels2[2,0]],
         [1]
     ])
+    # varsSq = varsSq * 0
     vars = np.vstack((varsLin, varsSq))
+    # print(vars)
     estimatedAccels = np.array([
         np.matmul(lstsq_solution[0][0:10,0].T,vars),
         np.matmul(lstsq_solution[0][10:20,0].T,vars),
         np.matmul(lstsq_solution[0][20:30,0].T,vars)
     ])
-    # print(lstsq_solution[0])
+    print(np.around(lstsq_solution[0][10:20,0], decimals=11))
     
     print("--------")
     print(estimatedAccels)
-    print(accels)
+    print(accels2)
     
 
 if __name__ == '__main__':

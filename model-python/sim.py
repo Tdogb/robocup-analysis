@@ -2,20 +2,23 @@ import pygame
 import model
 import numpy as np
 from controller import Controller
+import lqr
 import vis
 import motor
 import robot
 from util import rotation_matrix
+import random
 
 def main():
+    lqr.init()
     clock = pygame.time.Clock()
 
     # pos = np.asmatrix([0.2, 1.3, -0.1]).T
     # vel = np.asmatrix([3, 0, 3.]).T
     # pos = np.asmatrix([0., 1., 0.]).T
     # vel = np.asmatrix([3., 0., 3.]).T
-    pos = np.asmatrix([0., 0., 0.]).T
-    vel = np.asmatrix([1., 0., 0.]).T
+    pos = np.asmatrix([0., 1., 0.]).T
+    vel = np.asmatrix([3., 0., 3.]).T
     visualizer = vis.Visualizer()
 
     fps = 60
@@ -37,14 +40,14 @@ def main():
         robot_inertia=6.5*0.085*0.085*0.5,
         wheel_radius=0.029,
         wheel_inertia=2.4e-5,
-        wheel_angles=np.deg2rad([60, 129, -129, -60]))
+        wheel_angles=np.deg2rad([45, 135, -135, -45]))
 
     controller = Controller(dt, our_robot)
 
     while not visualizer.close:
         visualizer.update_events()
 
-        v = 1
+        v = 3
         # rx = np.asmatrix([np.sin(v * t), np.cos(v * t), v * t]).T
         # rv = v * np.asmatrix([np.cos(v * t), -np.sin(v * t), 1]).T
         # ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t), 0]).T
@@ -58,21 +61,28 @@ def main():
         # ra = v ** 2 * np.asmatrix([t, t, 0]).T
 
 
-        rx = np.asmatrix([np.sin(v * t), np.cos(v * t), v * 0]).T
-        rv = v * np.asmatrix([np.cos(v * t), -np.sin(v * t), 0]).T
-        ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t), 0]).T
+        # rx = np.asmatrix([np.sin(v * t), np.cos(v * t), v * 0]).T
+        # rv = v * np.asmatrix([np.cos(v * t), -np.sin(v * t), 0]).T
+        # ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t), 0]).T
 
-        rx = np.asmatrix([np.sin(v * t), 0, v * 0]).T
-        rv = v * np.asmatrix([np.cos(v * t), 0, 0]).T
-        ra = v ** 2 * np.asmatrix([-np.sin(v * t), 0, 0]).T
+        # rx = np.asmatrix([np.sin(v * t), 0, v * 0]).T
+        # rv = v * np.asmatrix([np.cos(v * t), 0, 0]).T
+        # ra = v ** 2 * np.asmatrix([-np.sin(v * t), 0, 0]).T
 
-        print(rx)
-        print(rv)
-
-        u = controller.feedforward_control(pos, vel, rx, rv, ra)
+        # u = controller.feedforward_control(pos, vel, rx, rv, ra)
+        z = np.matrix([0,0,0]).T
+        u = lqr.controlLQR(z, t * 60)
+        # print(u)
         vdot = our_robot.forward_dynamics_world(pos, vel, u)
+        
+        useDisturbance = False
+        if useDisturbance and random.randint(0,100) > 80:
+            maxRand = 2
+            disturbance = np.matrix([[random.uniform(-maxRand,maxRand)],
+                                     [random.uniform(-maxRand,maxRand)],
+                                     [random.uniform(-maxRand,maxRand)]])
+            vdot -= disturbance
         visualizer.draw(pos, rx)
-
         pos += dt * vel + 0.5 * vdot * dt ** 2
         vel += dt * vdot
 
