@@ -8,7 +8,9 @@ import motor
 import robot
 from util import rotation_matrix
 import random
+import csv
 
+robot_data = [[]]
 def main():
     lqr.init()
     clock = pygame.time.Clock()
@@ -60,7 +62,6 @@ def main():
         # rv = v * np.asmatrix([t, t, 0]).T
         # ra = v ** 2 * np.asmatrix([t, t, 0]).T
 
-
         # rx = np.asmatrix([np.sin(v * t), np.cos(v * t), v * 0]).T
         # rv = v * np.asmatrix([np.cos(v * t), -np.sin(v * t), 0]).T
         # ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t), 0]).T
@@ -70,9 +71,9 @@ def main():
         # ra = v ** 2 * np.asmatrix([-np.sin(v * t), 0, 0]).T
 
         # u = controller.feedforward_control(pos, vel, rx, rv, ra)
-        z = np.matrix([0,0,0]).T
-        u = lqr.controlLQR(z, t * 60)
+        # u = lqr.controlLQR(rv-vel, t * 60)
         # print(u)
+        u = controller.control(pos, vel, rx, rv, ra)
         vdot = our_robot.forward_dynamics_world(pos, vel, u)
         
         useDisturbance = False
@@ -85,7 +86,7 @@ def main():
         visualizer.draw(pos, rx)
         pos += dt * vel + 0.5 * vdot * dt ** 2
         vel += dt * vdot
-
+        robot_data.append([vdot[0,0], vdot[1,0], vdot[2,0], vel[0,0], vel[1,0], vel[2,0], u[0,0], u[1,0], u[2,0], u[3,0]])
         clock.tick(60)
         t += dt
         i += 1
@@ -95,6 +96,15 @@ def main():
             pos = np.asmatrix([0, 1, 3.]).T
             vel = np.asmatrix([1, 0, 1.]).T
             controller.reset()
+    writeCSV()
+
+def writeCSV():
+    with open('robot_data.csv', mode='w') as csv_file:
+        writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONE)
+
+        for line in robot_data:
+            writer.writerow(line)
+            print(line)
 
 
 if __name__ == '__main__':

@@ -26,19 +26,21 @@ A = np.exp(A_c * dt)
 
 B = np.linalg.inv(A_c) * (A - np.identity(3)) * B_c
 
-Q = np.diag(np.array([0.01,0.01,0.01]))
-R = np.diag(np.array([0.01,0.01,0.01,0.01]))
+Q_param = 100 #1 / (10*10)
+R_param = 1 #1 / (24*24)
+
+Q = np.diag(np.array([Q_param,Q_param,Q_param]))
+R = np.diag(np.array([R_param,R_param,R_param,R_param]))
 
 def init():
-    recursivePt(0)
-    print(P)
+    recursivePt(Q) #OR Q
 
 def recursivePt(P_t_1):
     global timestep
     if(timestep <= max_timesteps):
         # print(equationPt(P_t_1))
         result = equationPt(P_t_1)
-        P.insert(max_timesteps - timestep-1, result)
+        P.insert(max_timesteps - (timestep - 1), result)
         # calculateU(result, timestep - 1)
         timestep += 1
         return recursivePt(result)

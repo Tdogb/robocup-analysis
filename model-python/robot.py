@@ -164,10 +164,6 @@ def sysID(m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, accelX, accelY,
     A = np.concatenate((A,A_Block))
     b = np.concatenate((b,b_block))
 
-    # print(A)
-    # print(b)
-    # print(b)
-
 
 def main():
     global A, b
@@ -186,10 +182,6 @@ def main():
         wheel_radius=0.029,
         wheel_inertia=2.4e-5,
         wheel_angles=np.deg2rad([45, 135, -135, -45]))
-    # velocity = np.asmatrix([-1.0, -2, 3]).T
-    # voltage = np.asmatrix([24.0, 24, 24, 24]).T
-    # accel = np.asmatrix([1, 2, 3]).T
-    # pose = np.asmatrix([1, 2, 1]).T
 
     for _ in range(0, 100):
         volts = np.asmatrix([[random.uniform(-24,24)],
@@ -231,9 +223,19 @@ def main():
     ])
     print(np.around(lstsq_solution[0][10:20,0], decimals=11))
     
+    squeezedAccels = np.squeeze(estimatedAccels)
+    estimatedAccels2 = np.matrix([[squeezedAccels[0]],
+                                  [squeezedAccels[1]],
+                                  [squeezedAccels[2]]])
+    print("========")
+    print(estimatedAccels2)
+    print(robot.forward_dynamics_body(vels2, robot.inverse_dynamics_body(vels2, estimatedAccels2)))
     print("--------")
-    print(estimatedAccels)
-    print(accels2)
+    print(volts2)
+    print(robot.inverse_dynamics_body(vels2, robot.forward_dynamics_body(vels2, volts2)))
+
+    # print(estimatedAccels)
+    # print(accels2)
     
 
 if __name__ == '__main__':
