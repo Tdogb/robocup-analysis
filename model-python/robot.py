@@ -5,6 +5,7 @@ import motor
 import util
 import random
 import math
+import pandas
 
 class Robot:
     """A robocup robot."""
@@ -156,14 +157,13 @@ def sysID(m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, accelX, accelY,
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 1]
     ])
-    b_block = np.asmatrix([
+    b_block = np.matrix([
         [accelX],
         [accelY],
         [accelTh]
     ])
     A = np.concatenate((A,A_Block))
     b = np.concatenate((b,b_block))
-
 
 def main():
     global A, b
@@ -183,60 +183,32 @@ def main():
         wheel_inertia=2.4e-5,
         wheel_angles=np.deg2rad([45, 135, -135, -45]))
 
-    for _ in range(0, 100):
-        volts = np.asmatrix([[random.uniform(-24,24)],
-                             [random.uniform(-24,24)],
-                             [random.uniform(-24,24)],
-                             [random.uniform(-24,24)]])
-
-        vels = np.asmatrix([[random.uniform(-10, 10)],
-                            [random.uniform(-10, 10)],
-                            [random.uniform(-10, 10)]])
-        accels = robot.forward_dynamics_body(vels, volts)
-        # print(accels[0,0])
-        sysID(volts[0,0], volts[1,0], volts[2,0], volts[3,0], vels[0,0], vels[1,0], vels[2,0], accels[0,0], accels[1,0], accels[2,0])
+    csv = pandas.read_csv('/Users/tdogb/robocup-analysis/model-python/robot_data.csv', delimiter=",").to_numpy()
+    # for row in csv:
+    #     accels = np.asmatrix(row[0:3]).T
+    #     vels = np.asmatrix(row[3:6]).T
+    #     volts = np.asmatrix(row[6:10]).T
+    #     # accels = robot.forward_dynamics_body(vels, volts)
+    #     sysID(volts[0,0], volts[1,0], volts[2,0], volts[3,0], vels[0,0], vels[1,0], vels[2,0], accels[0,0], accels[1,0], accels[2,0])
     lstsq_solution = np.linalg.lstsq(A,b)
-    maxVolts = 10
-    volts2 = np.asmatrix([[random.uniform(-maxVolts,maxVolts)],
-                            [random.uniform(-maxVolts,maxVolts)],
-                            [random.uniform(-maxVolts,maxVolts)],
-                            [random.uniform(-maxVolts,maxVolts)]])
+    print(lstsq_solution[1])
+    b_ss = np.vstack((np.vstack((lstsq_solution[0][0:4,0].T, lstsq_solution[0][10:14,0].T)), lstsq_solution[0][20:24,0].T))
+    A_ss = np.vstack((np.vstack((lstsq_solution[0][4:9,0].T, lstsq_solution[0][14:19,0].T)), lstsq_solution[0][24:29,0].T))
+    print(A_ss)
+    print(b_ss)
 
-    vels2 = np.asmatrix([[random.uniform(-10, 10)],
-                        [random.uniform(-10, 10)],
-                        [random.uniform(-10, 10)]])
-    accels2 = robot.forward_dynamics_body(vels2, volts2)
+    # for row in csv:
+    #     accels = np.asmatrix(row[0:3]).T
+    #     vels = np.asmatrix(row[3:6]).T
+    #     volts = np.asmatrix(row[6:10]).T
+    #     velsMat = np.matrix([vels[0,0], vels[1,0], vels[2,0], vels[0,0]*vels[2,0], vels[1,0]*vels[2,0]]).T
 
-    varsLin = np.vstack((volts2,vels2))
-    varsSq = np.asmatrix([
-        [vels2[0,0]*vels2[2,0]],
-        [vels2[1,0]*vels2[2,0]],
-        [1]
-    ])
-    # varsSq = varsSq * 0
-    vars = np.vstack((varsLin, varsSq))
-    # print(vars)
-    estimatedAccels = np.array([
-        np.matmul(lstsq_solution[0][0:10,0].T,vars),
-        np.matmul(lstsq_solution[0][10:20,0].T,vars),
-        np.matmul(lstsq_solution[0][20:30,0].T,vars)
-    ])
-    print(np.around(lstsq_solution[0][10:20,0], decimals=11))
-    
-    squeezedAccels = np.squeeze(estimatedAccels)
-    estimatedAccels2 = np.matrix([[squeezedAccels[0]],
-                                  [squeezedAccels[1]],
-                                  [squeezedAccels[2]]])
-    print("========")
-    print(estimatedAccels2)
-    print(robot.forward_dynamics_body(vels2, robot.inverse_dynamics_body(vels2, estimatedAccels2)))
-    print("--------")
-    print(volts2)
-    print(robot.inverse_dynamics_body(vels2, robot.forward_dynamics_body(vels2, volts2)))
-
-    # print(estimatedAccels)
-    # print(accels2)
-    
+    #     print("AAAAAAAAAA")
+    #     print(accels)
+    #     print("-----------")
+    #     print(A_ss*velsMat + b_ss*volts)
+    #     print("==========")
+    #     print(robot.forward_dynamics_body(vels, volts) - (A_ss*velsMat + b_ss*volts))
 
 if __name__ == '__main__':
     main()

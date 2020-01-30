@@ -15,12 +15,9 @@ def main():
     lqr.init()
     clock = pygame.time.Clock()
 
-    # pos = np.asmatrix([0.2, 1.3, -0.1]).T
-    # vel = np.asmatrix([3, 0, 3.]).T
-    # pos = np.asmatrix([0., 1., 0.]).T
-    # vel = np.asmatrix([3., 0., 3.]).T
     pos = np.asmatrix([0., 1., 0.]).T
     vel = np.asmatrix([3., 0., 3.]).T
+
     visualizer = vis.Visualizer()
 
     fps = 60
@@ -49,32 +46,20 @@ def main():
     while not visualizer.close:
         visualizer.update_events()
 
-        v = 3
-        # rx = np.asmatrix([np.sin(v * t), np.cos(v * t), v * t]).T
-        # rv = v * np.asmatrix([np.cos(v * t), -np.sin(v * t), 1]).T
-        # ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t), 0]).T
+        v = 6
 
         rx = np.asmatrix([np.sin(v * t), np.cos(v * t / 3), v * np.sin(t)]).T
         rv = v * np.asmatrix([np.cos(v * t), -np.sin(v * t / 3) / 3, np.cos(t)]).T
         ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t / 3) / 9, -np.sin(t) / v]).T
 
-        # rx = np.asmatrix([t, t, 0]).T
-        # rv = v * np.asmatrix([t, t, 0]).T
-        # ra = v ** 2 * np.asmatrix([t, t, 0]).T
-
-        # rx = np.asmatrix([np.sin(v * t), np.cos(v * t), v * 0]).T
-        # rv = v * np.asmatrix([np.cos(v * t), -np.sin(v * t), 0]).T
-        # ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t), 0]).T
-
-        # rx = np.asmatrix([np.sin(v * t), 0, v * 0]).T
-        # rv = v * np.asmatrix([np.cos(v * t), 0, 0]).T
-        # ra = v ** 2 * np.asmatrix([-np.sin(v * t), 0, 0]).T
-
         # u = controller.feedforward_control(pos, vel, rx, rv, ra)
         # u = lqr.controlLQR(rv-vel, t * 60)
         # print(u)
         u = controller.control(pos, vel, rx, rv, ra)
+
         vdot = our_robot.forward_dynamics_world(pos, vel, u)
+        vel_b = np.linalg.inv(rotation_matrix(pos[2,0])) * vel
+        vdot_b = our_robot.forward_dynamics_body(vel_b, u)
         
         useDisturbance = False
         if useDisturbance and random.randint(0,100) > 80:
@@ -83,29 +68,42 @@ def main():
                                      [random.uniform(-maxRand,maxRand)],
                                      [random.uniform(-maxRand,maxRand)]])
             vdot -= disturbance
+        
         visualizer.draw(pos, rx)
         pos += dt * vel + 0.5 * vdot * dt ** 2
         vel += dt * vdot
-        robot_data.append([vdot[0,0], vdot[1,0], vdot[2,0], vel[0,0], vel[1,0], vel[2,0], u[0,0], u[1,0], u[2,0], u[3,0]])
+        #Get vel and accel relative to body frame
+        robot.sysID(u[0,0], u[1,0], u[2,0], u[3,0], vel_b[0,0], vel_b[1,0], vel_b[2,0], vdot_b[0,0], vdot_b[1,0], vdot_b[2,0])
+        # robot_data_line = [vdot_b[0,0], vdot_b[1,0], vdot_b[2,0], vel_b[0,0], vel_b[1,0], vel_b[2,0], u[0,0], u[1,0], u[2,0], u[3,0]]
+        # robot_data.append(robot_data_line)
+
+        # print("==============")
+        # print(rv[2,0])
+        # print(vel_b[2,0])
+        # print(ra[2,0])
+        # print(vdot[2,0])
+        # print(robot_data_line[2])
+        # print(u)
+        # print("--------------")
+        # break
         clock.tick(60)
         t += dt
         i += 1
         if t > 20:
+            print("t = 20")
             t = 0.0
             i = 0
             pos = np.asmatrix([0, 1, 3.]).T
             vel = np.asmatrix([1, 0, 1.]).T
             controller.reset()
-    writeCSV()
+    robot.main()
+    # writeCSV()
 
 def writeCSV():
     with open('robot_data.csv', mode='w') as csv_file:
         writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_NONE)
-
         for line in robot_data:
             writer.writerow(line)
-            print(line)
-
 
 if __name__ == '__main__':
     main()
