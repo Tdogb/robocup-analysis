@@ -152,12 +152,12 @@ def sysID(m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, accelX, accelY,
     global A, b
     # print(A)
     # print("-------------------------------------------------")
-    A_Block = np.matrix([
+    A_Block = np.asmatrix([
         [m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 1]
     ])
-    b_block = np.matrix([
+    b_block = np.asmatrix([
         [accelX],
         [accelY],
         [accelTh]
@@ -196,6 +196,7 @@ def main():
     A_ss = np.vstack((np.vstack((lstsq_solution[0][4:9,0].T, lstsq_solution[0][14:19,0].T)), lstsq_solution[0][24:29,0].T))
     print(A_ss)
     print(b_ss)
+    print(np.asmatrix([lstsq_solution[0][9,0], lstsq_solution[0][19,0], lstsq_solution[0][29,0]]).T)
 
     # for row in csv:
     #     accels = np.asmatrix(row[0:3]).T

@@ -46,46 +46,27 @@ def main():
     while not visualizer.close:
         visualizer.update_events()
 
-        v = 6
+        v = 3
 
         rx = np.asmatrix([np.sin(v * t), np.cos(v * t / 3), v * np.sin(t)]).T
         rv = v * np.asmatrix([np.cos(v * t), -np.sin(v * t / 3) / 3, np.cos(t)]).T
         ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t / 3) / 9, -np.sin(t) / v]).T
 
-        # u = controller.feedforward_control(pos, vel, rx, rv, ra)
         # u = lqr.controlLQR(rv-vel, t * 60)
-        # print(u)
+        # u = controller.feedforward_control(pos, vel, rx, rv, ra)
         u = controller.control(pos, vel, rx, rv, ra)
 
         vdot = our_robot.forward_dynamics_world(pos, vel, u)
         vel_b = np.linalg.inv(rotation_matrix(pos[2,0])) * vel
         vdot_b = our_robot.forward_dynamics_body(vel_b, u)
-        
-        useDisturbance = False
-        if useDisturbance and random.randint(0,100) > 80:
-            maxRand = 2
-            disturbance = np.matrix([[random.uniform(-maxRand,maxRand)],
-                                     [random.uniform(-maxRand,maxRand)],
-                                     [random.uniform(-maxRand,maxRand)]])
-            vdot -= disturbance
+        robot.sysID(u[0,0], u[1,0], u[2,0], u[3,0], vel_b[0,0], vel_b[1,0], vel_b[2,0], vdot_b[0,0], vdot_b[1,0], vdot_b[2,0])
         
         visualizer.draw(pos, rx)
         pos += dt * vel + 0.5 * vdot * dt ** 2
         vel += dt * vdot
-        #Get vel and accel relative to body frame
-        robot.sysID(u[0,0], u[1,0], u[2,0], u[3,0], vel_b[0,0], vel_b[1,0], vel_b[2,0], vdot_b[0,0], vdot_b[1,0], vdot_b[2,0])
         # robot_data_line = [vdot_b[0,0], vdot_b[1,0], vdot_b[2,0], vel_b[0,0], vel_b[1,0], vel_b[2,0], u[0,0], u[1,0], u[2,0], u[3,0]]
         # robot_data.append(robot_data_line)
 
-        # print("==============")
-        # print(rv[2,0])
-        # print(vel_b[2,0])
-        # print(ra[2,0])
-        # print(vdot[2,0])
-        # print(robot_data_line[2])
-        # print(u)
-        # print("--------------")
-        # break
         clock.tick(60)
         t += dt
         i += 1

@@ -32,7 +32,7 @@ class Controller:
         derivative = gRb.T * (rv - v)
         derivative[2, 0] *= 0.01
         goal_acceleration = ra + self.Mp * (rx - x) + self.Md * (rv - v) + self.Mi * gRp.T * self.integral
-        return self.model.inverse_dynamics_world(x, rv, goal_acceleration)
+        # return self.model.inverse_dynamics_world(x, rv, goal_acceleration)
         uff = self.model.inverse_dynamics_world(x, rv, ra)
         up = self.Kp * GTinv * error
         ui = self.Ki * GTinv * np.diag([1, 1, 0]) * gRb * gRp.T * self.integral
@@ -58,8 +58,8 @@ class Controller:
         #     [0, -3.40636316,  0, -0.949457230, 0],
         #     [0, 0, -10.18314673, 0, 0]])
 
-        A = np.matrix([[-3.40636316,  0,  0, 0, 0.949457230],
-                       [0, -3.40636316,  0, -0.949457230, 0],
+        A = np.matrix([[-3.40636316,  0,  0, 0, 0],
+                       [0, -3.40636316,  0, 0, 0],
                        [0, 0, -10.18314673, 0, 0]])
                        
         B = np.matrix([[-6.46368782,  5.76865088, -5.76865088,  6.46368782],
