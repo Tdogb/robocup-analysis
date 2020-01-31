@@ -152,7 +152,7 @@ def sysID(m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, accelX, accelY,
     global A, b
     # print(A)
     # print("-------------------------------------------------")
-    A_Block = np.asmatrix([
+    A_Block = np.matrix([
         [m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 1]
@@ -183,7 +183,7 @@ def main():
         wheel_inertia=2.4e-5,
         wheel_angles=np.deg2rad([45, 135, -135, -45]))
 
-    csv = pandas.read_csv('/Users/tdogb/robocup-analysis/model-python/robot_data.csv', delimiter=",").to_numpy()
+    # csv = pandas.read_csv('/Users/tdogb/robocup-analysis/model-python/robot_data.csv', delimiter=",").to_numpy()
     # for row in csv:
     #     accels = np.asmatrix(row[0:3]).T
     #     vels = np.asmatrix(row[3:6]).T

@@ -1,4 +1,6 @@
 import numpy as np
+import scipy
+import scipy.signal
 
 # A = np.matrix([[-3.40636316, 0, 0],
 #                 [0, -3.40636316, 0],
@@ -32,17 +34,23 @@ R_param = 1 #1 / (24*24)
 Q = np.diag(np.array([Q_param,Q_param,Q_param]))
 R = np.diag(np.array([R_param,R_param,R_param,R_param]))
 
+convergedP = np.zeros((3,3))
+
 def init():
     recursivePt(Q) #OR Q
 
 def recursivePt(P_t_1):
-    global timestep
+    global timestep, convergedP
     if(timestep <= max_timesteps):
         # print(equationPt(P_t_1))
         result = equationPt(P_t_1)
         P.insert(max_timesteps - (timestep - 1), result)
         # calculateU(result, timestep - 1)
         timestep += 1
+        if (result-P_t_1).all():
+            print("CONVERGED")
+            convergedP = result
+            return 0 #<-----------------!!!!!!!!!!!!
         return recursivePt(result)
     else:
         result = equationPt(P_t_1)
@@ -61,7 +69,7 @@ def calculateU(P_t_1, xt, t):
     # U.insert(t, ut)
 
 def controlLQR(x, t):
-    return calculateU(P[int(t+1)], x, int(t))
+    return calculateU(convergedP, x, int(t)) #P[int(t+1)]
 
 if __name__ == "__main__":
     init()
