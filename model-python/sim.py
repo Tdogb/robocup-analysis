@@ -53,13 +53,16 @@ def main():
         ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t / 3) / 9, -np.sin(t) / v]).T
 
         # u = lqr.controlLQR(rv-vel, t * 60)
-        
-        # u = controller.feedforward_control(pos, vel, rx, rv, ra)
-        u = controller.control(pos, vel, rx, rv, ra)
+        u = controller.feedforward_control(pos, vel, rx, rv, ra)
+        # u = controller.control(pos, vel, rx, rv, ra)
+
         vdot = our_robot.forward_dynamics_world(pos, vel, u)
 
         vel_b = np.linalg.inv(rotation_matrix(pos[2,0])) * vel
         vdot_b = our_robot.forward_dynamics_body(vel_b, u)
+
+        # print(u - our_robot.inverse_dynamics_body(vel_b, vdot_b))
+
         robot.sysID(u[0,0], u[1,0], u[2,0], u[3,0], vel_b[0,0], vel_b[1,0], vel_b[2,0], vdot_b[0,0], vdot_b[1,0], vdot_b[2,0])
         
         visualizer.draw(pos, rx)

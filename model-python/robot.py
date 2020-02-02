@@ -183,7 +183,7 @@ def main():
         wheel_inertia=2.4e-5,
         wheel_angles=np.deg2rad([45, 135, -135, -45]))
 
-    # csv = pandas.read_csv('/Users/tdogb/robocup-analysis/model-python/robot_data.csv', delimiter=",").to_numpy()
+    csv = pandas.read_csv('/Users/tdogb/robocup-analysis/model-python/robot_data.csv', delimiter=",").to_numpy()
     # for row in csv:
     #     accels = np.asmatrix(row[0:3]).T
     #     vels = np.asmatrix(row[3:6]).T
@@ -194,22 +194,23 @@ def main():
     print(lstsq_solution[1])
     b_ss = np.vstack((np.vstack((lstsq_solution[0][0:4,0].T, lstsq_solution[0][10:14,0].T)), lstsq_solution[0][20:24,0].T))
     A_ss = np.vstack((np.vstack((lstsq_solution[0][4:9,0].T, lstsq_solution[0][14:19,0].T)), lstsq_solution[0][24:29,0].T))
+    print(A.shape)
     print(A_ss)
     print(b_ss)
     print(np.asmatrix([lstsq_solution[0][9,0], lstsq_solution[0][19,0], lstsq_solution[0][29,0]]).T)
 
-    # for row in csv:
-    #     accels = np.asmatrix(row[0:3]).T
-    #     vels = np.asmatrix(row[3:6]).T
-    #     volts = np.asmatrix(row[6:10]).T
-    #     velsMat = np.matrix([vels[0,0], vels[1,0], vels[2,0], vels[0,0]*vels[2,0], vels[1,0]*vels[2,0]]).T
+    for row in csv:
+        accels = np.asmatrix(row[0:3]).T
+        vels = np.asmatrix(row[3:6]).T
+        volts = np.asmatrix(row[6:10]).T
+        velsMat = np.matrix([vels[0,0], vels[1,0], vels[2,0], vels[0,0]*vels[2,0], vels[1,0]*vels[2,0]]).T
 
-    #     print("AAAAAAAAAA")
-    #     print(accels)
-    #     print("-----------")
-    #     print(A_ss*velsMat + b_ss*volts)
-    #     print("==========")
-    #     print(robot.forward_dynamics_body(vels, volts) - (A_ss*velsMat + b_ss*volts))
+        # print("AAAAAAAAAA")
+        # print(accels)
+        # print("-----------")
+        # print(A_ss*velsMat + b_ss*volts)
+        # print("==========")
+        # print(robot.forward_dynamics_body(vels, volts) - (A_ss*velsMat + b_ss*volts))
 
 if __name__ == '__main__':
     main()

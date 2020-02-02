@@ -58,19 +58,20 @@ class Controller:
         #     [0, -3.40636316,  0, -0.949457230, 0],
         #     [0, 0, -10.18314673, 0, 0]])
 
-        A = np.matrix([[-3.40636316,  0,  0, 0, 0],
-                       [0, -3.40636316,  0, 0, 0],
-                       [0, 0, -10.18314673, 0, 0]])
-                       
-        B = np.matrix([[-6.46368782,  5.76865088, -5.76865088,  6.46368782],
-                       [-1.66037333,  1.66037333, -2.35541027,  2.35541027],
-                       [16.955448,    3.12722983, 16.955448,    3.12722983]])
+        A = np.asmatrix([[-3.40636316e+00,  6.30051566e-15,  2.44249065e-15,  9.43689571e-16, 9.49457230e-01],
+                         [-5.22599183e-14, -3.40636316e+00, -7.54470156e-14, -9.49457230e-01, -3.24581838e-14],
+                         [ 8.16510852e-14,  5.95601691e-14, -1.18314673e+01, -1.60358807e-14, 1.01791642e-14]])
 
-        constantMatrix = np.matrix([[-3.32719963e-15],
-                                    [-1.16616943e-14],
-                                    [ 1.88173939e-14]])
+        B = np.asmatrix([[-2.57668784,  1.8816509,  -1.8816509,   2.57668784],
+                         [ 0.38855405, -0.38855405, -0.30648288,  0.30648288],
+                         [10.04708061, 10.03559721, 10.04708061, 10.03559721]])
+
+        constantMatrix = np.matrix([[-2.88657986e-15],
+                                    [-2.66501017e-14],
+                                    [ 1.58923465e-14]])
 
         rv_body = np.linalg.inv(util.rotation_matrix(current_x[2,0])) * rv
+        vel_body = np.linalg.inv(util.rotation_matrix(current_x[2,0])) * vel
         xDot = np.linalg.inv(util.rotation_matrix(current_x[2,0])) * ra
 
         x = np.matrix([[rv_body[0,0]],
@@ -79,6 +80,7 @@ class Controller:
                        [rv_body[0,0]*rv_body[2,0]],
                        [rv_body[1,0]*rv_body[2,0]]])
         feedforward = np.linalg.pinv(B)*(xDot - A*x - constantMatrix)
+        print(self.model.inverse_dynamics_body(rv_body, xDot) - feedforward)
         return feedforward
 
         '''
