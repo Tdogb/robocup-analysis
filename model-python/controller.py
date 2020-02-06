@@ -62,9 +62,9 @@ class Controller:
                          [-5.22599183e-14, -3.40636316e+00, -7.54470156e-14, -9.49457230e-01, -3.24581838e-14],
                          [ 8.16510852e-14,  5.95601691e-14, -1.18314673e+01, -1.60358807e-14, 1.01791642e-14]])
 
-        B = np.asmatrix([[-2.57668784,  1.8816509,  -1.8816509,   2.57668784],
-                         [ 0.38855405, -0.38855405, -0.30648288,  0.30648288],
-                         [10.04708061, 10.03559721, 10.04708061, 10.03559721]])
+        B = np.asmatrix([[-0.19108171, -0.50395522,  0.50395522,  0.19108171],
+                         [ 2.1336161,  -2.1336161,   1.43857916, -1.43857916],
+                         [10.0413389,  10.0413389,  10.0413389, 10.0413389]])
 
         constantMatrix = np.matrix([[-2.88657986e-15],
                                     [-2.66501017e-14],
@@ -80,7 +80,7 @@ class Controller:
                        [rv_body[0,0]*rv_body[2,0]],
                        [rv_body[1,0]*rv_body[2,0]]])
         feedforward = np.linalg.pinv(B)*(xDot - A*x - constantMatrix)
-        print(self.model.inverse_dynamics_body(rv_body, xDot) - feedforward)
+        # print(self.model.inverse_dynamics_body(rv_body, xDot) - feedforward)
         return feedforward
 
         '''

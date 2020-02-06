@@ -53,8 +53,8 @@ def main():
         ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t / 3) / 9, -np.sin(t) / v]).T
 
         # u = lqr.controlLQR(rv-vel, t * 60)
-        u = controller.feedforward_control(pos, vel, rx, rv, ra)
-        # u = controller.control(pos, vel, rx, rv, ra)
+        # u = controller.feedforward_control(pos, vel, rx, rv, ra)
+        u = controller.control(pos, vel, rx, rv, ra)
 
         vdot = our_robot.forward_dynamics_world(pos, vel, u)
 
