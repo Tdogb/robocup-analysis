@@ -39,7 +39,8 @@ def main():
         robot_inertia=6.5*0.085*0.085*0.5,
         wheel_radius=0.029,
         wheel_inertia=2.4e-5,
-        wheel_angles=np.deg2rad([45, 135, -135, -45]))
+        wheel_angles = np.deg2rad([45, 135, -135, -45]))
+        # wheel_angles=np.deg2rad([60, 129, -129, -60]))
 
     controller = Controller(dt, our_robot)
 
@@ -52,14 +53,20 @@ def main():
         rv = v * np.asmatrix([np.cos(v * t), -np.sin(v * t / 3) / 3, np.cos(t)]).T
         ra = v ** 2 * np.asmatrix([-np.sin(v * t), -np.cos(v * t / 3) / 9, -np.sin(t) / v]).T
 
-        # u = lqr.controlLQR(rv-vel, t * 60)
-        # u = controller.feedforward_control(pos, vel, rx, rv, ra)
-        u = controller.control(pos, vel, rx, rv, ra)
-
-        vdot = our_robot.forward_dynamics_world(pos, vel, u)
-
         vel_b = np.linalg.inv(rotation_matrix(pos[2,0])) * vel
+        rv_b = np.linalg.inv(rotation_matrix(pos[2,0])) * rv
+
+        rx_b = np.linalg.inv(rotation_matrix(pos[2,0])) * rx
+        pos_b = np.linalg.inv(rotation_matrix(pos[2,0])) * pos
+
+        # u = controller.feedforward_control(pos, vel, rx, rv, ra)
+        state_vector = np.vstack((rx_b-pos_b,rv_b-vel_b))
+        u = lqr.controlLQR(state_vector) # +=
+        u = u[2:,0]
+        # u = controller.control(pos, vel, rx, rv, ra)
+
         vdot_b = our_robot.forward_dynamics_body(vel_b, u)
+        vdot = our_robot.forward_dynamics_world(pos, vel, u)
 
         # print(u - our_robot.inverse_dynamics_body(vel_b, vdot_b))
 
@@ -78,8 +85,8 @@ def main():
             print("t = 20")
             t = 0.0
             i = 0
-            pos = np.asmatrix([0, 1, 3.]).T
-            vel = np.asmatrix([1, 0, 1.]).T
+            pos = np.asmatrix([0, 1, 0.]).T
+            vel = np.asmatrix([3, 0, 3.]).T
             controller.reset()
     robot.main()
     # writeCSV()
