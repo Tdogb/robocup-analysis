@@ -29,7 +29,7 @@ B = np.linalg.inv(A_c) * (A - np.identity(3)) * B_c
 # print(A)
 A_new = np.zeros((6,6))
 A_new[3:, 3:] = A
-A_new[0:3, 3:] = -dt * np.identity(3)
+A_new[0:3, 3:] = dt * np.identity(3)
 A_new[:3,:3] = np.identity(3) # currentX - dt*vel
 print(A_new)
 
@@ -54,8 +54,7 @@ controlMatrix = np.zeros((4,6))
 def init():
     global controlMatrix
     np.set_printoptions(linewidth=200)
-    controlMatrix = scipy.linalg.solve_discrete_are(A,B,Q,R)
-    # recursivePt(Q) #OR Q
+    recursivePt(Q) #OR Q
 
 def recursivePt(P_t_1):
     global timestep, convergedP, controlMatrix
@@ -81,6 +80,7 @@ def equationPt(P_t_1):
     print("------------------------------------------------")
     print(Q + A.T * P_t_1 * A - A.T * P_t_1)
     print(B)
+    print(Q + A.T * P_t_1 * A - A.T * P_t_1 * B)
     print("=---------------------pass---------------------=")
     # print(P_t_1)
     # print(Q + A.T * P_t_1 * A - A.T * P_t_1 * B * np.linalg.inv(R + B.T * P_t_1 * B) * B.T * P_t_1 * A)
