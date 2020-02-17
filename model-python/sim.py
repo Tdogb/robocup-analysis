@@ -15,7 +15,7 @@ def main():
     lqr.init()
     clock = pygame.time.Clock()
 
-    pos = np.asmatrix([0., 1., 0.]).T
+    pos = np.asmatrix([0.1, 3., 0.]).T
     vel = np.asmatrix([3., 0., 3.]).T
 
     visualizer = vis.Visualizer()
@@ -39,8 +39,8 @@ def main():
         robot_inertia=6.5*0.085*0.085*0.5,
         wheel_radius=0.029,
         wheel_inertia=2.4e-5,
-        wheel_angles = np.deg2rad([45, 135, -135, -45]))
-        # wheel_angles=np.deg2rad([60, 129, -129, -60]))
+        wheel_angles=np.deg2rad([60, 129, -129, -60]))
+        # wheel_angles = np.deg2rad([45, 135, -135, -45]))
 
     controller = Controller(dt, our_robot)
 
@@ -59,16 +59,16 @@ def main():
         rx_b = np.linalg.inv(rotation_matrix(pos[2,0])) * rx
         pos_b = np.linalg.inv(rotation_matrix(pos[2,0])) * pos
 
-        # u = controller.feedforward_control(pos, vel, rx, rv, ra)
+        u = controller.feedforward_control(pos, vel, rx, rv, ra)
         state_vector = np.vstack((rx_b-pos_b,rv_b-vel_b))
-        u = lqr.controlLQR(state_vector) # +=
-        u = u[2:,0]
-        # u = controller.control(pos, vel, rx, rv, ra)
+        u += lqr.controlLQR(state_vector) # +=
+        u = controller.applyVoltageLimits(24, pos, u, vel)
 
         vdot_b = our_robot.forward_dynamics_body(vel_b, u)
         vdot = our_robot.forward_dynamics_world(pos, vel, u)
-
-        # print(u - our_robot.inverse_dynamics_body(vel_b, vdot_b))
+        vdot *= 0.8
+        # if np.random.rand(1) > 0.8:
+        #     vdot -= np.random.rand(1) * 10
 
         robot.sysID(u[0,0], u[1,0], u[2,0], u[3,0], vel_b[0,0], vel_b[1,0], vel_b[2,0], vdot_b[0,0], vdot_b[1,0], vdot_b[2,0])
         

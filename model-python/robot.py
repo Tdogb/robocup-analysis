@@ -145,7 +145,7 @@ vM0     vM1     vM2     vM3       lin vel x       lin vel y       ang vel  = acc
 b Matrix: Accelerations
 
 '''
-A = np.zeros((3, 21))
+A = np.zeros((3, 24))
 b = np.zeros((3, 1))
 def sysID(m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, accelX, accelY, accelTh):
     global A, b
@@ -159,12 +159,13 @@ def sysID(m0Volts, m1Volts, m2Volts, m3Volts, velX, velY, velTh, accelX, accelY,
     # wheel_angles = np.deg2rad([60, 129, -129, -60])
     wheel_angles = np.deg2rad([45, 135, -135, -45])
 
-    motor_volts = lambda signs:signs[0] * m0Volts * math.cos(wheel_angles[0])/math.cos(np.deg2rad(45)) + signs[1] * m1Volts * math.cos(wheel_angles[1])/math.cos(np.deg2rad(135)) + signs[2] * m2Volts * math.cos(wheel_angles[2])/math.cos(np.deg2rad(-135)) + signs[3] * m3Volts * math.cos(wheel_angles[3])/math.cos(np.deg2rad(-45))
-
+    # motor_volts = lambda signs:signs[0] * m0Volts * math.cos(wheel_angles[0])/math.cos(np.deg2rad(45)) + signs[1] * m1Volts * math.cos(wheel_angles[1])/math.cos(np.deg2rad(135)) + signs[2] * m2Volts * math.cos(wheel_angles[2])/math.cos(np.deg2rad(-135)) + signs[3] * m3Volts * math.cos(wheel_angles[3])/math.cos(np.deg2rad(-45))
+    # -, -, +, +
+    # +, -, -, +
     A_Block = np.matrix([
-        [motor_volts([-1, -1, 1, 1]), velX, velY, velTh, velTh*velX, velTh*velY, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, motor_volts([1, -1, -1, 1]), velX, velY, velTh, velTh*velX, velTh*velY, 1, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, m0Volts+m1Volts+m2Volts+m3Volts, velX, velY, velTh, velTh*velX, velTh*velY, 1]
+        [-m0Volts+m3Volts, -m1Volts+m2Volts, velX, velY, velTh, velTh*velX, velTh*velY, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, m0Volts+m3Volts, -m1Volts-m2Volts, velX, velY, velTh, velTh*velX, velTh*velY, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, m0Volts+m3Volts, m1Volts+m2Volts, velX, velY, velTh, velTh*velX, velTh*velY, 1]
     ])
 
     b_block = np.asmatrix([
@@ -191,8 +192,8 @@ def main():
         robot_inertia=6.5*0.085*0.085*0.5,
         wheel_radius=0.029,
         wheel_inertia=2.4e-5,
-        # wheel_angles=np.deg2rad([60, 129, -129, -60]))
-        wheel_angles = np.deg2rad([45, 135, -135, -45]))
+        wheel_angles=np.deg2rad([60, 129, -129, -60]))
+        # wheel_angles = np.deg2rad([45, 135, -135, -45]))
 
     # csv = pandas.read_csv('/Users/tdogb/robocup-analysis/model-python/robot_data.csv', delimiter=",").to_numpy()
     # for row in csv:
@@ -203,19 +204,24 @@ def main():
     #     sysID(volts[0,0], volts[1,0], volts[2,0], volts[3,0], vels[0,0], vels[1,0], vels[2,0], accels[0,0], accels[1,0], accels[2,0])
     lstsq_solution = np.linalg.lstsq(A,b)
     print("-----")
-    print(lstsq_solution[1])
+    print(lstsq_solution[0])
     print("-----")
     # b_ss = np.vstack((np.vstack((lstsq_solution[0][0:4,0].T, lstsq_solution[0][10:14,0].T)), lstsq_solution[0][20:24,0].T))
     # A_ss = np.vstack((np.vstack((lstsq_solution[0][4:9,0].T, lstsq_solution[0][14:19,0].T)), lstsq_solution[0][24:29,0].T))
-    b_ss = np.matrix([[-lstsq_solution[0][0,0], -lstsq_solution[0][0,0], lstsq_solution[0][0,0], lstsq_solution[0][0,0]],
-                      [lstsq_solution[0][7,0], -lstsq_solution[0][7,0], -lstsq_solution[0][7,0], lstsq_solution[0][7,0]],
-                      [lstsq_solution[0][14,0], lstsq_solution[0][14,0], lstsq_solution[0][14,0], lstsq_solution[0][14,0]]])
+    b_ss = np.matrix([[-lstsq_solution[0][0,0], -lstsq_solution[0][1,0], lstsq_solution[0][1,0], lstsq_solution[0][0,0]],
+                      [lstsq_solution[0][8,0], -lstsq_solution[0][9,0], -lstsq_solution[0][9,0], lstsq_solution[0][8,0]],
+                      [lstsq_solution[0][16,0], lstsq_solution[0][17,0], lstsq_solution[0][17,0], lstsq_solution[0][16,0]]])
                       
-    A_ss = np.vstack((np.vstack((lstsq_solution[0][1:6,0].T, lstsq_solution[0][8:13,0].T)), lstsq_solution[0][15:20,0].T))
+    A_ss = np.vstack((np.vstack((lstsq_solution[0][2:7,0].T, lstsq_solution[0][10:15,0].T)), lstsq_solution[0][18:23,0].T))
+
+    constants = np.matrix([lstsq_solution[0][7,0],lstsq_solution[0][15,0],lstsq_solution[0][23,0]]).T
 
     print(A.shape)
     print(A_ss)
+    print("")
     print(b_ss)
+    print("")
+    print(constants)
     # print(np.asmatrix([lstsq_solution[0][9,0], lstsq_solution[0][19,0], lstsq_solution[0][29,0]]).T)
 
     # for row in csv:
